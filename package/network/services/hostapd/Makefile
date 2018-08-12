@@ -26,6 +26,7 @@ PKG_CONFIG_DEPENDS:= \
 	CONFIG_PACKAGE_kmod-ath9k \
 	CONFIG_PACKAGE_kmod-cfg80211 \
 	CONFIG_PACKAGE_hostapd \
+	CONFIG_PACKAGE_libopenssl \
 	CONFIG_PACKAGE_hostapd-mini \
 	CONFIG_WPA_RFKILL_SUPPORT \
 	CONFIG_DRIVER_WEXT_SUPPORT \
@@ -74,6 +75,10 @@ DRIVER_MAKEOPTS= \
 
 ifeq ($(LOCAL_VARIANT),full)
   DRIVER_MAKEOPTS += CONFIG_IEEE80211W=$(CONFIG_DRIVER_11W_SUPPORT)
+  ifeq ($(LOCAL_TYPE),hostapd)
+    DRIVER_MAKEOPTS += CONFIG_TLS=openssl
+    TARGET_LDFLAGS += -lcrypto -lssl
+  endif
 endif
 
 ifneq ($(LOCAL_TYPE),hostapd)
@@ -109,7 +114,6 @@ define Package/hostapd/Default
   CATEGORY:=Network
   TITLE:=IEEE 802.1x Authenticator
   URL:=http://hostap.epitest.fi/
-  DEPENDS:=$(DRV_DEPENDS) +hostapd-common +libubus
 endef
 
 define Package/hostapd
@@ -117,6 +121,7 @@ $(call Package/hostapd/Default)
   TITLE+= (full)
   VARIANT:=full
   CONFLICTS:=wpad wpad-mini wpad-mesh
+  DEPENDS:=$(DRV_DEPENDS) +hostapd-common +libubus +libopenssl
 endef
 
 define Package/hostapd/description
@@ -126,6 +131,7 @@ endef
 
 define Package/hostapd-mini
 $(call Package/hostapd/Default)
+  DEPENDS:=$(DRV_DEPENDS) +hostapd-common +libubus
   TITLE+= (WPA-PSK only)
   VARIANT:=mini
   CONFLICTS:=wpad wpad-mini wpad-mesh
